@@ -11,6 +11,8 @@ this is a library for polling gpsd with python
 ### .. use
 
 ```python
-import gpsd
+from pygpsd import GPSD
 
+gpsd = GPSD()
+data = gpsd.poll()
 ```
