@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-from gpsd.type.health import Health
+from pygpsd.type.health import Health
 
 
 @dataclass

@@ -2,10 +2,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
-from gpsd.type.ecef import ECEF
-from gpsd.type.fix import Fix
-from gpsd.type.geo import Geo
-from gpsd.type.satellite import Satellite
+from pygpsd.type.ecef import ECEF
+from pygpsd.type.fix import Fix
+from pygpsd.type.geo import Geo
+from pygpsd.type.satellite import Satellite
 
 
 @dataclass
