@@ -3,10 +3,9 @@ from __future__ import annotations
 from io import TextIOWrapper
 from json import loads
 from socket import socket, AF_INET, SOCK_STREAM
-from time import sleep
 from typing import Optional
 
-from gpsd.type.data import Data
+from pygpsd.type.data import Data
 
 
 class GPSD:
