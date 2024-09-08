@@ -14,11 +14,13 @@ class UnexpectedMessageException(Exception):
 
 
 class NoGPSDeviceFoundException(Exception):
-    __cause__ = "No GPS device was found"
+    def __init__(self):
+        Exception.__init__(self, "No GPS device found")
 
 
 class GPSInactiveWarning(UserWarning):
-    __cause__ = "GPS is not active"
+    def __init__(self):
+        Exception.__init__(self, "GPS is inactive")
 
 
 class GPSD:
