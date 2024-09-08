@@ -8,6 +8,19 @@ from typing import Optional
 from pygpsd.type.data import Data
 
 
+class UnexpectedMessageException(Exception):
+    def __init__(self, message: dict):
+        Exception.__init__(self, f"Unexpected message: {message}")
+
+
+class NoGPSDeviceFoundException(Exception):
+    __cause__ = "No GPS device was found"
+
+
+class GPSInactiveWarning(UserWarning):
+    __cause__ = "GPS is not active"
+
+
 class GPSD:
     socket: socket
     stream: Optional[TextIOWrapper] = None
@@ -21,7 +34,7 @@ class GPSD:
         self.stream.flush()
 
     def on_unexpected_message(self, message: dict):
-        raise Exception(f"Unexpected message: {message}")
+        raise UnexpectedMessageException(message)
 
     def __init__(self, host: str = "127.0.0.1", port: int = 2947):
         self.socket = socket(AF_INET, SOCK_STREAM)
@@ -38,7 +51,7 @@ class GPSD:
         if msg["class"] == "DEVICES":
             self.devices = msg["devices"]
             if len(self.devices) == 0:
-                raise Exception("No GPS devices found")
+                raise NoGPSDeviceFoundException()
 
         msg = self.read()
         if msg["class"] == "WATCH":
@@ -52,6 +65,6 @@ class GPSD:
         if msg["class"] != "POLL":
             self.on_unexpected_message(msg)
         if not msg["active"]:
-            raise UserWarning("GPS not active")
+            raise GPSInactiveWarning()
 
         return Data.from_json(msg)
