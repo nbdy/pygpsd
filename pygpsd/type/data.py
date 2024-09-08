@@ -33,7 +33,7 @@ class Data:
         ret = Data(
             mode=Fix(tpv["mode"]),
 
-            time=datetime.fromisoformat(tpv["time"]),
+            time=datetime.fromisoformat(tpv["time"]) if "time" in tpv else datetime.now(),
             leap_seconds=tpv["leapseconds"] if "leapseconds" in tpv else 0,
 
             satellites=[Satellite.from_json(satellite) for satellite in sky["satellites"]],
