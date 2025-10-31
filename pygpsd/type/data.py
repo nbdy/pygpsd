@@ -28,15 +28,36 @@ class Data:
 
     @staticmethod
     def from_json(data: dict) -> Data:
+        """
+        Parse GPS data from JSON response.
+        
+        Security improvements:
+        - Validate required keys exist
+        - Validate lists are non-empty before accessing
+        - Handle missing or malformed data gracefully
+        """
+        # Security: Validate required keys and non-empty lists
+        if "tpv" not in data or not isinstance(data["tpv"], list) or len(data["tpv"]) == 0:
+            raise ValueError("Invalid data: 'tpv' must be a non-empty list")
+        if "sky" not in data or not isinstance(data["sky"], list) or len(data["sky"]) == 0:
+            raise ValueError("Invalid data: 'sky' must be a non-empty list")
+        
         tpv = data["tpv"][-1]
         sky = data["sky"][-1]
+        
+        # Validate tpv is a dictionary
+        if not isinstance(tpv, dict):
+            raise ValueError("Invalid data: 'tpv' entry must be a dictionary")
+        if not isinstance(sky, dict):
+            raise ValueError("Invalid data: 'sky' entry must be a dictionary")
+        
         ret = Data(
-            mode=Fix(tpv["mode"]),
+            mode=Fix(tpv["mode"]) if "mode" in tpv else Fix.NO_VALUE,
 
             time=datetime.fromisoformat(tpv["time"]) if "time" in tpv else datetime.now(),
             leap_seconds=tpv["leapseconds"] if "leapseconds" in tpv else 0,
 
-            satellites=[Satellite.from_json(satellite) for satellite in sky["satellites"]],
+            satellites=[Satellite.from_json(satellite) for satellite in sky.get("satellites", [])],
 
             geo=Geo.from_json(tpv),
             ecef=ECEF.from_json(tpv)

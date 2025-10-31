@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from io import TextIOWrapper
-from json import loads
+from json import loads, JSONDecodeError
 from socket import socket, AF_INET, SOCK_STREAM
 from typing import Optional
 
 from pygpsd.type.data import Data
+
+# Security: Set maximum line size to prevent memory exhaustion attacks
+MAX_LINE_SIZE = 1024 * 1024  # 1MB limit
 
 
 class UnexpectedMessageException(Exception):
@@ -29,7 +32,20 @@ class GPSD:
     devices: list[dict[str, Data]] = []
 
     def _read(self) -> dict:
-        return loads(self.stream.readline())
+        """
+        Read and parse a JSON message from the GPS daemon.
+        
+        Security improvements:
+        - Limited line size to prevent memory exhaustion
+        - JSON parsing error handling
+        """
+        try:
+            line = self.stream.readline(MAX_LINE_SIZE)
+            if not line:
+                raise ConnectionError("Connection closed by GPS daemon")
+            return loads(line)
+        except JSONDecodeError as e:
+            raise UnexpectedMessageException({"error": f"Invalid JSON: {e}"})
 
     def _write(self, data: str):
         self.stream.write(f"{data}\n")
@@ -38,7 +54,7 @@ class GPSD:
     def on_unexpected_message(self, message: dict):
         raise UnexpectedMessageException(message)
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 2947):
+    def __init__(self, host: str = "127.0.0.1", port: int = 2947, timeout: float = 10.0):
         """
         Connect to the GPS daemon
 
@@ -46,10 +62,13 @@ class GPSD:
          - UnexpectedMessageException if an unexpected message is received
          - NoGPSDeviceFoundException if no GPS device is found
 
-        :param host:
-        :param port:
+        :param host: GPS daemon host address
+        :param port: GPS daemon port
+        :param timeout: Socket timeout in seconds (default: 10.0) - prevents DoS attacks
         """
         self.socket = socket(AF_INET, SOCK_STREAM)
+        # Security: Set socket timeout to prevent indefinite hangs (DoS vulnerability)
+        self.socket.settimeout(timeout)
         self.socket.connect((host, port))
         self.stream = self.socket.makefile("rw")
 
@@ -89,3 +108,30 @@ class GPSD:
             raise GPSInactiveWarning()
 
         return Data.from_json(msg)
+
+    def close(self):
+        """
+        Close the connection to the GPS daemon and release resources.
+        
+        Security: Proper resource cleanup to prevent resource leaks.
+        """
+        if self.stream:
+            try:
+                self.stream.close()
+            except Exception:
+                pass  # Ignore errors during cleanup
+            self.stream = None
+        if self.socket:
+            try:
+                self.socket.close()
+            except Exception:
+                pass  # Ignore errors during cleanup
+
+    def __enter__(self):
+        """Context manager entry - returns self for use in 'with' statements."""
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit - ensures resources are cleaned up."""
+        self.close()
+        return False  # Don't suppress exceptions
