@@ -30,13 +30,26 @@ class Data:
     def from_json(data: dict) -> Data:
         tpv = data["tpv"][-1]
         sky = data["sky"][-1]
+
+        # Parse time, handling 'Z' suffix for UTC
+        if "time" in tpv:
+            time_str = tpv["time"]
+            # Replace trailing 'Z' (UTC indicator) with '+00:00' for fromisoformat compatibility
+            if time_str.endswith("Z"):
+                time_str = time_str[:-1] + "+00:00"
+            time = datetime.fromisoformat(time_str)
+        else:
+            time = datetime.now()
+
+        satellites = sky.get("satellites", [])
+        satellites = [Satellite.from_json(satellite) for satellite in satellites]
+
         ret = Data(
             mode=Fix(tpv["mode"]),
-
-            time=datetime.fromisoformat(tpv["time"]) if "time" in tpv else datetime.now(),
+            time=time,
             leap_seconds=tpv["leapseconds"] if "leapseconds" in tpv else 0,
 
-            satellites=[Satellite.from_json(satellite) for satellite in sky["satellites"]],
+            satellites=satellites,
 
             geo=Geo.from_json(tpv),
             ecef=ECEF.from_json(tpv)
