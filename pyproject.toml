@@ -19,6 +19,13 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 
+[project.optional-dependencies]
+test = [
+    # unittest is part of Python standard library (no dependencies required)
+    # Optional: Add coverage tools for test coverage reporting
+    # "coverage>=7.0",
+]
+
 [project.urls]
 Homepage = "https://github.com/nbdy/pygpsd"
 Documentation = "https://github.com/nbdy/pygpsd/wiki"
