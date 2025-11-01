@@ -118,13 +118,13 @@ class GPSD:
         if self.stream:
             try:
                 self.stream.close()
-            except OSError:
+            except ValueError:
                 pass  # Ignore errors during cleanup
             self.stream = None
         if self.socket:
             try:
                 self.socket.close()
-            except OSError:
+            except ValueError:
                 pass  # Ignore errors during cleanup
 
     def __enter__(self) -> "GPSD":
