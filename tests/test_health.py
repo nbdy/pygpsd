@@ -12,13 +12,13 @@ from pygpsd.type.health import Health
 class TestHealth(unittest.TestCase):
     """Test Health enum."""
 
-    def test_health_values(self):
+    def test_health_values(self) -> None:
         """Test Health enum values."""
         self.assertEqual(Health.UNKNOWN, 0)
         self.assertEqual(Health.HEALTHY, 1)
         self.assertEqual(Health.UNHEALTHY, 2)
 
-    def test_health_from_int(self):
+    def test_health_from_int(self) -> None:
         """Test creating Health from integer."""
         self.assertEqual(Health(1), Health.HEALTHY)
         self.assertEqual(Health(2), Health.UNHEALTHY)
