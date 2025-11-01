@@ -2,6 +2,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from pygpsd.type.health import Health
+from pygpsd.type.validation import safe_int, safe_float, safe_bool, validate_azimuth, validate_elevation
 
 
 @dataclass
@@ -17,13 +18,19 @@ class Satellite:
 
     @staticmethod
     def from_json(data: dict) -> Satellite:
+        # Enum validation with fallback to safe default
+        try:
+            health = Health(data["health"]) if "health" in data else Health.UNKNOWN
+        except ValueError:
+            health = Health.UNKNOWN
+
         return Satellite(
-            prn=data['PRN'] if "PRN" in data else 0,
-            az=data['az'] if "az" in data else 0,
-            el=data['el'] if "el" in data else 0,
-            gnssid=data['gnssid'] if "gnssid" in data else 0,
-            health=Health(data["health"]) if "health" in data else Health.UNKNOWN,
-            ss=data["ss"] if "ss" in data else 0,
-            svid=data["svid"] if "svid" in data else 0,
-            used=data["used"] if "used" in data else False,
+            prn=safe_int(data.get('PRN'), 0),
+            az=validate_azimuth(safe_float(data.get('az'), 0.0)),
+            el=validate_elevation(safe_float(data.get('el'), 0.0)),
+            gnssid=safe_int(data.get('gnssid'), 0),
+            health=health,
+            ss=safe_float(data.get("ss"), 0.0),
+            svid=safe_int(data.get("svid"), 0),
+            used=safe_bool(data.get("used"), False),
         )

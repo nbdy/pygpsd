@@ -1,6 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
+from pygpsd.type.validation import safe_float, validate_latitude, validate_longitude
+
 
 @dataclass
 class GeoPosition:
@@ -11,9 +13,9 @@ class GeoPosition:
     @staticmethod
     def from_json(data: dict) -> GeoPosition:
         return GeoPosition(
-            longitude=data["lon"] if "lon" in data else 0,
-            latitude=data["lat"] if "lat" in data else 0,
-            altitude=data["alt"] if "alt" in data else 0,
+            longitude=validate_longitude(safe_float(data.get("lon"), 0.0)),
+            latitude=validate_latitude(safe_float(data.get("lat"), 0.0)),
+            altitude=safe_float(data.get("alt"), 0.0),
         )
 
 
@@ -26,9 +28,9 @@ class GeoTrajectory:
     @staticmethod
     def from_json(data: dict) -> GeoTrajectory:
         return GeoTrajectory(
-            data["track"] if "track" in data else 0,
-            data["speed"] if "speed" in data else 0,
-            data["climb"] if "climb" in data else 0,
+            safe_float(data.get("track"), 0.0),
+            safe_float(data.get("speed"), 0.0),
+            safe_float(data.get("climb"), 0.0),
         )
 
 
@@ -46,14 +48,14 @@ class GeoErrors:
     @staticmethod
     def from_json(data: dict) -> GeoErrors:
         return GeoErrors(
-            epc=data["epc"] if "epc" in data else 0,
-            epd=data["epd"] if "epd" in data else 0,
-            eph=data["eph"] if "eph" in data else 0,
-            eps=data["eps"] if "eps" in data else 0,
-            ept=data["ept"] if "ept" in data else 0,
-            epx=data["epx"] if "epx" in data else 0,
-            epy=data["epy"] if "epy" in data else 0,
-            epv=data["epv"] if "epv" in data else 0,
+            epc=safe_float(data.get("epc"), 0.0),
+            epd=safe_float(data.get("epd"), 0.0),
+            eph=safe_float(data.get("eph"), 0.0),
+            eps=safe_float(data.get("eps"), 0.0),
+            ept=safe_float(data.get("ept"), 0.0),
+            epx=safe_float(data.get("epx"), 0.0),
+            epy=safe_float(data.get("epy"), 0.0),
+            epv=safe_float(data.get("epv"), 0.0),
         )
 
 

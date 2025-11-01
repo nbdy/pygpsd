@@ -1,6 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
+from pygpsd.type.validation import safe_float
+
 
 @dataclass
 class ECEFPosition:
@@ -11,9 +13,9 @@ class ECEFPosition:
     @staticmethod
     def from_json(data: dict) -> ECEFPosition:
         return ECEFPosition(
-            x=data["ecefx"] if "ecefx" in data else 0,
-            y=data["ecefy"] if "ecefy" in data else 0,
-            z=data["ecefz"] if "ecefz" in data else 0,
+            x=safe_float(data.get("ecefx"), 0.0),
+            y=safe_float(data.get("ecefy"), 0.0),
+            z=safe_float(data.get("ecefz"), 0.0),
         )
 
 
@@ -26,9 +28,9 @@ class ECEFVelocity:
     @staticmethod
     def from_json(data: dict) -> ECEFVelocity:
         return ECEFVelocity(
-            x=data["ecefvx"] if "ecefvx" in data else 0,
-            y=data["ecefvy"] if "ecefvy" in data else 0,
-            z=data["ecefvz"] if "ecefvz" in data else 0,
+            x=safe_float(data.get("ecefvx"), 0.0),
+            y=safe_float(data.get("ecefvy"), 0.0),
+            z=safe_float(data.get("ecefvz"), 0.0),
         )
 
 
@@ -40,8 +42,8 @@ class ECEFErrors:
     @staticmethod
     def from_json(data: dict) -> ECEFErrors:
         return ECEFErrors(
-            position=data["ecefpAcc"] if "ecefpAcc" in data else 0,
-            velocity=data["ecefvAcc"] if "ecefvAcc" in data else 0,
+            position=safe_float(data.get("ecefpAcc"), 0.0),
+            velocity=safe_float(data.get("ecefvAcc"), 0.0),
         )
 
 

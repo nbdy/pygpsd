@@ -2,6 +2,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 
+from pygpsd.type.validation import safe_datetime, safe_int
+
 
 @dataclass
 class Time:
@@ -11,6 +13,6 @@ class Time:
     @staticmethod
     def from_json(data: dict) -> Time:
         return Time(
-            time=datetime.fromisoformat(data["time"]),
-            leap_seconds=data["leap_seconds"] if "leap_seconds" in data else 0,
+            time=safe_datetime(data.get("time")),
+            leap_seconds=safe_int(data.get("leap_seconds"), 0),
         )
