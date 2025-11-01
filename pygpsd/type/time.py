@@ -14,5 +14,5 @@ class Time:
     def from_json(data: dict) -> Time:
         return Time(
             time=safe_datetime(data.get("time")),
-            leap_seconds=safe_int(data.get("leap_seconds"), 0),
+            leap_seconds=safe_int(data.get("leapseconds"), 0),
         )
