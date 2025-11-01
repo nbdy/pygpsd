@@ -17,9 +17,6 @@ from pygpsd.type.fix import Fix
 
 from tests.base import BaseGPSDTest
 from tests.test_data import (
-    GPSD_VERSION_RESPONSE,
-    GPSD_DEVICES_RESPONSE,
-    GPSD_WATCH_RESPONSE,
     GPSD_POLL_RESPONSE_3D_FIX,
     GPSD_POLL_RESPONSE_INACTIVE,
     GPSD_UNEXPECTED_MESSAGE
@@ -32,14 +29,11 @@ class TestGPSDIntegration(BaseGPSDTest):
     @patch('pygpsd.socket')
     def test_full_workflow_connection_poll_close(self, mock_socket_class) -> None:
         """Test complete workflow: connect → poll → close."""
+        responses = self.get_standard_init_responses()
+        responses.append(json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n')
         mock_sock, mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n',
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n'
-            ]
+            responses
         )
 
         # Connect
@@ -55,23 +49,18 @@ class TestGPSDIntegration(BaseGPSDTest):
 
         # Close
         gpsd.close()
-        mock_stream.close.assert_called()
-        mock_sock.close.assert_called()
+        self.assert_cleanup_called(mock_stream, mock_sock)
 
     @patch('pygpsd.socket')
     def test_multiple_poll_cycles(self, mock_socket_class) -> None:
         """Test multiple consecutive poll operations."""
+        responses = self.get_standard_init_responses()
+        # Multiple poll responses
+        for _ in range(3):
+            responses.append(json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n')
         _mock_sock, _mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n',
-                # Multiple poll responses
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n',
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n',
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n'
-            ]
+            responses
         )
 
         gpsd = GPSD()
@@ -88,16 +77,13 @@ class TestGPSDIntegration(BaseGPSDTest):
     @patch('pygpsd.socket')
     def test_error_recovery_inactive_gps(self, mock_socket_class) -> None:
         """Test error recovery when GPS becomes inactive."""
+        responses = self.get_standard_init_responses()
+        responses.append(json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n')  # First poll succeeds
+        responses.append(json.dumps(GPSD_POLL_RESPONSE_INACTIVE) + '\n')  # Second poll fails
+        responses.append(json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n')  # Third poll succeeds
         _mock_sock, _mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n',
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n',  # First poll succeeds
-                json.dumps(GPSD_POLL_RESPONSE_INACTIVE) + '\n',  # Second poll fails
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n'   # Third poll succeeds
-            ]
+            responses
         )
 
         gpsd = GPSD()
@@ -119,16 +105,13 @@ class TestGPSDIntegration(BaseGPSDTest):
     @patch('pygpsd.socket')
     def test_error_recovery_unexpected_message(self, mock_socket_class) -> None:
         """Test behavior when encountering unexpected messages."""
+        responses = self.get_standard_init_responses()
+        responses.append(json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n')  # First poll succeeds
+        responses.append(json.dumps(GPSD_UNEXPECTED_MESSAGE) + '\n')  # Second poll fails
+        responses.append(json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n')  # Third poll succeeds
         _mock_sock, _mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n',
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n',  # First poll succeeds
-                json.dumps(GPSD_UNEXPECTED_MESSAGE) + '\n',    # Second poll fails
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n'   # Third poll succeeds
-            ]
+            responses
         )
 
         gpsd = GPSD()
@@ -150,15 +133,12 @@ class TestGPSDIntegration(BaseGPSDTest):
     @patch('pygpsd.socket')
     def test_context_manager_workflow(self, mock_socket_class) -> None:
         """Test complete workflow using context manager."""
+        responses = self.get_standard_init_responses()
+        responses.append(json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n')
+        responses.append(json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n')
         mock_sock, mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n',
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n',
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n'
-            ]
+            responses
         )
 
         # Use context manager
@@ -173,20 +153,16 @@ class TestGPSDIntegration(BaseGPSDTest):
             self.assertEqual(data2.mode, Fix.FIX_3D)
 
         # Verify cleanup happened automatically
-        mock_stream.close.assert_called()
-        mock_sock.close.assert_called()
+        self.assert_cleanup_called(mock_stream, mock_sock)
 
     @patch('pygpsd.socket')
     def test_resource_cleanup_after_error(self, mock_socket_class) -> None:
         """Test that resources are cleaned up even after errors."""
+        responses = self.get_standard_init_responses()
+        responses.append(json.dumps(GPSD_POLL_RESPONSE_INACTIVE) + '\n')  # Will raise GPSInactiveWarning
         mock_sock, mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n',
-                json.dumps(GPSD_POLL_RESPONSE_INACTIVE) + '\n'  # Will raise GPSInactiveWarning
-            ]
+            responses
         )
 
         gpsd = None
@@ -199,18 +175,13 @@ class TestGPSDIntegration(BaseGPSDTest):
             pass
 
         # Verify cleanup still happened
-        mock_stream.close.assert_called()
-        mock_sock.close.assert_called()
+        self.assert_cleanup_called(mock_stream, mock_sock)
 
     @patch('pygpsd.socket')
     def test_rapid_polling_workflow(self, mock_socket_class) -> None:
         """Test rapid polling scenario (stress test)."""
         # Generate many poll responses
-        responses = [
-            json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-            json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-            json.dumps(GPSD_WATCH_RESPONSE) + '\n'
-        ]
+        responses = self.get_standard_init_responses()
         # Add 50 poll responses
         for _ in range(50):
             responses.append(json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n')
@@ -228,20 +199,16 @@ class TestGPSDIntegration(BaseGPSDTest):
                 self.assertEqual(data.mode, Fix.FIX_3D)
 
         # Verify cleanup
-        mock_stream.close.assert_called()
-        mock_sock.close.assert_called()
+        self.assert_cleanup_called(mock_stream, mock_sock)
 
     @patch('pygpsd.socket')
     def test_connection_parameters_persistence(self, mock_socket_class) -> None:
         """Test that connection parameters are properly maintained."""
+        responses = self.get_standard_init_responses()
+        responses.append(json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n')
         mock_sock, _mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n',
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n'
-            ]
+            responses
         )
 
         # Connect with specific parameters
