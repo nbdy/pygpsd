@@ -32,13 +32,13 @@ class TestData(unittest.TestCase):
         self.assertEqual(data.mode, Fix.FIX_3D)
 
         # Test time
-        self.assertIsInstance(data.time, datetime)
-        self.assertEqual(data.time.year, 2023)
-        self.assertEqual(data.time.month, 10)
-        self.assertEqual(data.time.day, 31)
+        self.assertIsInstance(data.time.time, datetime)
+        self.assertEqual(data.time.time.year, 2023)
+        self.assertEqual(data.time.time.month, 10)
+        self.assertEqual(data.time.time.day, 31)
 
         # Test leap seconds
-        self.assertEqual(data.leap_seconds, 18)
+        self.assertEqual(data.time.leap_seconds, 18)
 
         # Test satellites
         self.assertEqual(len(data.satellites), 12)
@@ -70,7 +70,7 @@ class TestData(unittest.TestCase):
         data = Data.from_json(GPSD_POLL_RESPONSE_2D_FIX)
 
         self.assertEqual(data.mode, Fix.FIX_2D)
-        self.assertEqual(data.leap_seconds, 18)
+        self.assertEqual(data.time.leap_seconds, 18)
         self.assertEqual(len(data.satellites), 3)
 
         # 2D fix should have position but altitude might be 0
