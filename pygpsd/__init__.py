@@ -3,7 +3,7 @@ from __future__ import annotations
 from io import TextIOWrapper
 from json import loads, JSONDecodeError
 from socket import socket, AF_INET, SOCK_STREAM
-from typing import Optional
+from typing import Optional, Any
 
 from pygpsd.type.data import Data
 
@@ -23,7 +23,7 @@ class NoGPSDeviceFoundException(Exception):
 
 class GPSInactiveWarning(UserWarning):
     def __init__(self):
-        Exception.__init__(self, "GPS is inactive")
+        UserWarning.__init__(self, "GPS is inactive")
 
 
 class GPSD:
@@ -34,7 +34,7 @@ class GPSD:
     def _read(self) -> dict:
         """
         Read and parse a JSON message from the GPS daemon.
-        
+
         Security improvements:
         - Limited line size to prevent memory exhaustion
         - JSON parsing error handling
@@ -45,13 +45,13 @@ class GPSD:
                 raise ConnectionError("Connection closed by GPS daemon")
             return loads(line)
         except JSONDecodeError as e:
-            raise UnexpectedMessageException({"error": f"Invalid JSON: {e}"})
+            raise UnexpectedMessageException({"error": f"Invalid JSON: {e}"}) from e
 
-    def _write(self, data: str):
+    def _write(self, data: str) -> None:
         self.stream.write(f"{data}\n")
         self.stream.flush()
 
-    def on_unexpected_message(self, message: dict):
+    def on_unexpected_message(self, message: dict) -> None:
         raise UnexpectedMessageException(message)
 
     def __init__(self, host: str = "127.0.0.1", port: int = 2947, timeout: float = 10.0):
@@ -109,29 +109,29 @@ class GPSD:
 
         return Data.from_json(msg)
 
-    def close(self):
+    def close(self) -> None:
         """
         Close the connection to the GPS daemon and release resources.
-        
+
         Security: Proper resource cleanup to prevent resource leaks.
         """
         if self.stream:
             try:
                 self.stream.close()
-            except Exception:
+            except OSError:
                 pass  # Ignore errors during cleanup
             self.stream = None
         if self.socket:
             try:
                 self.socket.close()
-            except Exception:
+            except OSError:
                 pass  # Ignore errors during cleanup
 
-    def __enter__(self):
+    def __enter__(self) -> "GPSD":
         """Context manager entry - returns self for use in 'with' statements."""
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(self, exc_type: Optional[type], exc_val: Optional[BaseException], exc_tb: Optional[Any]) -> bool:
         """Context manager exit - ensures resources are cleaned up."""
         self.close()
         return False  # Don't suppress exceptions
