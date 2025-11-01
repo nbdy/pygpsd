@@ -161,7 +161,7 @@ class TestDateTimeParsing(unittest.TestCase):
         }
         result = Data.from_json(data)
         # Should use datetime.now() as default
-        self.assertIsInstance(result.time, datetime)
+        self.assertIsInstance(result.time.time, datetime)
 
     def test_data_time_with_z_suffix(self):
         """Test Data.from_json with ISO 8601 'Z' suffix for UTC."""
@@ -172,14 +172,14 @@ class TestDateTimeParsing(unittest.TestCase):
         }
         result = Data.from_json(data)
         # Should parse correctly
-        self.assertIsInstance(result.time, datetime)
-        self.assertEqual(result.time.year, 2025)
-        self.assertEqual(result.time.month, 10)
-        self.assertEqual(result.time.day, 31)
-        self.assertEqual(result.time.hour, 19)
-        self.assertEqual(result.time.minute, 19)
-        self.assertEqual(result.time.second, 6)
-        self.assertEqual(result.time.microsecond, 130000)
+        self.assertIsInstance(result.time.time, datetime)
+        self.assertEqual(result.time.time.year, 2025)
+        self.assertEqual(result.time.time.month, 10)
+        self.assertEqual(result.time.time.day, 31)
+        self.assertEqual(result.time.time.hour, 19)
+        self.assertEqual(result.time.time.minute, 19)
+        self.assertEqual(result.time.time.second, 6)
+        self.assertEqual(result.time.time.microsecond, 130000)
 
     def test_data_missing_satellites_key(self):
         """Test Data.from_json with missing satellites key in sky data."""
