@@ -6,16 +6,10 @@ of resources including handling of exceptions during cleanup.
 """
 
 from unittest.mock import patch
-import json
 
 from pygpsd import GPSD
 
 from tests.base import BaseGPSDTest
-from tests.test_data import (
-    GPSD_VERSION_RESPONSE,
-    GPSD_DEVICES_RESPONSE,
-    GPSD_WATCH_RESPONSE
-)
 
 
 class TestGPSDResourceManagement(BaseGPSDTest):
@@ -26,11 +20,7 @@ class TestGPSDResourceManagement(BaseGPSDTest):
         """Test close() method properly cleans up resources."""
         mock_sock, mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n'
-            ]
+            self.get_standard_init_responses()
         )
 
         gpsd = GPSD()
@@ -45,11 +35,7 @@ class TestGPSDResourceManagement(BaseGPSDTest):
         """Test close() handles exceptions during cleanup."""
         mock_sock, mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n'
-            ]
+            self.get_standard_init_responses()
         )
 
         # Make close() raise exceptions
@@ -66,11 +52,7 @@ class TestGPSDResourceManagement(BaseGPSDTest):
         """Test GPSD as context manager."""
         mock_sock, mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n'
-            ]
+            self.get_standard_init_responses()
         )
 
         # Use GPSD as context manager
@@ -78,19 +60,14 @@ class TestGPSDResourceManagement(BaseGPSDTest):
             self.assertIsNotNone(gpsd)
 
         # Verify cleanup was called
-        mock_stream.close.assert_called()
-        mock_sock.close.assert_called()
+        self.assert_cleanup_called(mock_stream, mock_sock)
 
     @patch('pygpsd.socket')
     def test_context_manager_with_exception(self, mock_socket_class) -> None:
         """Test context manager properly closes on exception."""
         mock_sock, mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n'
-            ]
+            self.get_standard_init_responses()
         )
 
         # Use context manager with exception
@@ -101,5 +78,4 @@ class TestGPSDResourceManagement(BaseGPSDTest):
             pass
 
         # Verify cleanup was still called
-        mock_stream.close.assert_called()
-        mock_sock.close.assert_called()
+        self.assert_cleanup_called(mock_stream, mock_sock)

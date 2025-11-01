@@ -11,12 +11,7 @@ import json
 from pygpsd import GPSD, MAX_LINE_SIZE
 
 from tests.base import BaseGPSDTest
-from tests.test_data import (
-    GPSD_VERSION_RESPONSE,
-    GPSD_DEVICES_RESPONSE,
-    GPSD_WATCH_RESPONSE,
-    GPSD_POLL_RESPONSE_3D_FIX
-)
+from tests.test_data import GPSD_POLL_RESPONSE_3D_FIX
 
 
 class TestGPSDReadWrite(BaseGPSDTest):
@@ -27,11 +22,7 @@ class TestGPSDReadWrite(BaseGPSDTest):
         """Test _write() method sends data correctly."""
         _mock_sock, mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n'
-            ]
+            self.get_standard_init_responses()
         )
 
         gpsd = GPSD()
@@ -47,14 +38,11 @@ class TestGPSDReadWrite(BaseGPSDTest):
     @patch('pygpsd.socket')
     def test_read_method_max_line_size(self, mock_socket_class) -> None:
         """Test _read() method respects max line size."""
+        responses = self.get_standard_init_responses()
+        responses.append(json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n')
         _mock_sock, mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n',
-                json.dumps(GPSD_POLL_RESPONSE_3D_FIX) + '\n'
-            ]
+            responses
         )
 
         gpsd = GPSD()

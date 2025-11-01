@@ -20,6 +20,31 @@ from tests.test_data import (
 class BaseGPSDTest(unittest.TestCase):
     """Base test class for GPSD-related tests with common mock setup."""
 
+    @staticmethod
+    def get_standard_init_responses() -> list[str]:
+        """
+        Get standard GPSD initialization response sequence.
+
+        Returns:
+            list[str]: List of standard initialization responses (VERSION, DEVICES, WATCH)
+        """
+        return [
+            json.dumps(GPSD_VERSION_RESPONSE) + '\n',
+            json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
+            json.dumps(GPSD_WATCH_RESPONSE) + '\n'
+        ]
+
+    def assert_cleanup_called(self, mock_stream: MagicMock, mock_sock: MagicMock) -> None:
+        """
+        Assert that cleanup methods were called on stream and socket.
+
+        Args:
+            mock_stream: The mocked stream object
+            mock_sock: The mocked socket object
+        """
+        mock_stream.close.assert_called()
+        mock_sock.close.assert_called()
+
     def create_gpsd_mock(self, additional_responses: Optional[list[str]] = None) -> tuple:
         """
         Create a properly mocked GPSD instance with socket and stream mocks.

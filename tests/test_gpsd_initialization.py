@@ -17,9 +17,7 @@ from pygpsd import (
 from tests.base import BaseGPSDTest
 from tests.test_data import (
     GPSD_VERSION_RESPONSE,
-    GPSD_DEVICES_RESPONSE,
     GPSD_DEVICES_EMPTY_RESPONSE,
-    GPSD_WATCH_RESPONSE,
     GPSD_WATCH_DISABLED_RESPONSE,
     GPSD_UNEXPECTED_MESSAGE
 )
@@ -33,11 +31,7 @@ class TestGPSDInitialization(BaseGPSDTest):
         """Test successful connection to GPSD daemon."""
         mock_sock, mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n'
-            ]
+            self.get_standard_init_responses()
         )
 
         # Create GPSD instance
@@ -69,11 +63,7 @@ class TestGPSDInitialization(BaseGPSDTest):
         """Test GPSD initialization with default parameters."""
         mock_sock, _mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_RESPONSE) + '\n'
-            ]
+            self.get_standard_init_responses()
         )
 
         _gpsd = GPSD()
@@ -110,13 +100,11 @@ class TestGPSDInitialization(BaseGPSDTest):
     @patch('pygpsd.socket')
     def test_watch_not_enabled(self, mock_socket_class) -> None:
         """Test error when WATCH mode is not enabled."""
+        responses = self.get_standard_init_responses()
+        responses[-1] = json.dumps(GPSD_WATCH_DISABLED_RESPONSE) + '\n'
         _mock_sock, _mock_stream = self.setup_mock_socket(
             mock_socket_class,
-            [
-                json.dumps(GPSD_VERSION_RESPONSE) + '\n',
-                json.dumps(GPSD_DEVICES_RESPONSE) + '\n',
-                json.dumps(GPSD_WATCH_DISABLED_RESPONSE) + '\n'
-            ]
+            responses
         )
 
         with self.assertRaises(UnexpectedMessageException):
