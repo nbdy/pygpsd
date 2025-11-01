@@ -109,6 +109,7 @@ class GPSD:
 
         return Data.from_json(msg)
 
+    # noinspection PyBroadException
     def close(self) -> None:
         """
         Close the connection to the GPS daemon and release resources.
@@ -118,13 +119,13 @@ class GPSD:
         if self.stream:
             try:
                 self.stream.close()
-            except ValueError:
+            except Exception:
                 pass  # Ignore errors during cleanup
             self.stream = None
         if self.socket:
             try:
                 self.socket.close()
-            except ValueError:
+            except Exception:
                 pass  # Ignore errors during cleanup
 
     def __enter__(self) -> "GPSD":
