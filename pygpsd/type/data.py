@@ -1,12 +1,11 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from datetime import datetime
 
 from pygpsd.type.ecef import ECEF
 from pygpsd.type.fix import Fix
 from pygpsd.type.geo import Geo
 from pygpsd.type.satellite import Satellite
-from pygpsd.type.validation import safe_datetime, safe_int
+from pygpsd.type.time import Time
 
 # Maximum number of satellites to prevent DoS attacks
 # Realistic max is ~100 satellites across all GNSS systems
@@ -17,8 +16,7 @@ MAX_SATELLITES = 200
 class Data:
     mode: Fix
 
-    time: datetime
-    leap_seconds: int
+    time: Time
 
     satellites: list[Satellite]
 
@@ -73,8 +71,7 @@ class Data:
         ret = Data(
             mode=mode,
 
-            time=safe_datetime(tpv.get("time")),
-            leap_seconds=safe_int(tpv.get("leapseconds"), 0),
+            time=Time.from_json(tpv),
 
             satellites=[Satellite.from_json(satellite) for satellite in satellites_list],
 
