@@ -105,7 +105,7 @@ Pylint runs automatically in CI/CD on every push and pull request.
 ## Requirements
 
 - A running gpsd daemon on port 2947 (or wherever you point it)
-- Python 3.8 or newer
+- Python 3.10 or newer
 
 ## License
 
